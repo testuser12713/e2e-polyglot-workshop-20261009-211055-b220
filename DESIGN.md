@@ -131,7 +131,7 @@ Used inside an area to switch subviews (e.g. 'Termin anfragen' / 'Status abrufen
 
 ### LoginForm (Werkstattbereich)
 
-Centered Card, width 100% max 400px, padding 32px (24px mobile), radius lg. Title 'Anmeldung Werkstattbereich' size_xl 24px weight 600, then Benutzername + Passwort TextFields (full width, 44px, password type with reveal IconButton), then the primary submit Button full width. On failure an Alert (danger) appears above the form with a single generic message — never revealing whether the user or the password was wrong. While the request runs the submit Button is loading and both fields are disabled. A 429 answer surfaces as an Alert with the hint to wait a minute; the form keeps its values, the password field is cleared.
+Centered Card, width 100% max 400px, padding 32px (24px mobile), radius lg. Title 'Anmeldung Werkstattbereich' size_xl 24px weight 600, then E-Mail + Passwort TextFields (full width, 44px, password type with reveal IconButton), then the primary submit Button full width. On failure an Alert (danger) appears above the form with a single generic message — never revealing whether the user or the password was wrong. While the request runs the submit Button is loading and both fields are disabled. A 429 answer surfaces as an Alert with the hint to wait a minute; the form keeps its values, the password field is cleared.
 
 ### StatTile (Dashboard)
 
