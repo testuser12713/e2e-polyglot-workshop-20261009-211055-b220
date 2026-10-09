@@ -10,15 +10,16 @@ import (
 	"time"
 )
 
-// uniquePlate returns a plate that cannot collide with another test run.
-func uniquePlate(prefix string) string {
+// vehiclesTestPlate returns a plate that cannot collide with another test run.
+// The name is slice-specific because appointments_test.go owns uniquePlate.
+func vehiclesTestPlate(prefix string) string {
 	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixNano())
 }
 
 func TestCreateVehicleReturns201(t *testing.T) {
 	env, pool := newCustomersTestEnv(t)
 
-	plate := uniquePlate("B-TEST")
+	plate := vehiclesTestPlate("B-TEST")
 	rec := customersPostJSON(t, env.handler, "/api/vehicles", vehicleCreateRequest{
 		Plate:   plate,
 		Make:    "Volkswagen",
@@ -52,7 +53,7 @@ func TestCreateVehicleReturns201(t *testing.T) {
 func TestDuplicatePlateReturns409(t *testing.T) {
 	env, pool := newCustomersTestEnv(t)
 
-	plate := uniquePlate("B-DUP")
+	plate := vehiclesTestPlate("B-DUP")
 	body := vehicleCreateRequest{Plate: plate, Make: "Audi", Model: "A4", Mileage: 1000}
 
 	first := customersPostJSON(t, env.handler, "/api/vehicles", body)
@@ -84,7 +85,7 @@ func TestCreateVehicleInvalidValuesReturn400(t *testing.T) {
 		body vehicleCreateRequest
 	}{
 		{"missing plate", vehicleCreateRequest{Plate: "   ", Make: "VW", Model: "Golf", Mileage: 10}},
-		{"negative mileage", vehicleCreateRequest{Plate: uniquePlate("B-NEG"), Make: "VW", Model: "Golf", Mileage: -1}},
+		{"negative mileage", vehicleCreateRequest{Plate: vehiclesTestPlate("B-NEG"), Make: "VW", Model: "Golf", Mileage: -1}},
 	}
 	for _, tc := range cases {
 		rec := customersPostJSON(t, env.handler, "/api/vehicles", tc.body)
@@ -100,7 +101,7 @@ func TestCreateVehicleInvalidValuesReturn400(t *testing.T) {
 func TestVehiclePlateIsNormalisedToUpper(t *testing.T) {
 	env, pool := newCustomersTestEnv(t)
 
-	lower := uniquePlate("b-mix")
+	lower := vehiclesTestPlate("b-mix")
 	upper := strings.ToUpper(lower)
 
 	first := customersPostJSON(t, env.handler, "/api/vehicles", vehicleCreateRequest{
