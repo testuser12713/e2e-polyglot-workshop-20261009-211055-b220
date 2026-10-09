@@ -18,9 +18,9 @@ export default function Layout() {
     <div className="app-shell">
       <header className="topnav">
         <div className="container topnav__inner">
-          <Link to="/" className="wordmark" onClick={closeMenu}>
+          <div className="wordmark">
             <span className="wordmark__name">Kfz-Werkstatt</span>
-          </Link>
+          </div>
 
           <button
             type="button"
