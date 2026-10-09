@@ -121,6 +121,15 @@
         "AUTH_SECRET": {
           "generate": "hex",
           "bytes": 32
+        },
+        "SEED_EMPLOYEE_EMAIL": {
+          "dev": "werkstatt@example.com",
+          "not_secret": true,
+          "why": "The e-mail address of the seeded workshop account is a public login identifier, not a credential; the password is the secret."
+        },
+        "SEED_EMPLOYEE_PASSWORD": {
+          "generate": "hex",
+          "bytes": 16
         }
       }
     },
