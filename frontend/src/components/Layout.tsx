@@ -2,17 +2,7 @@ import { useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 
-const customerLinks = [
-  { to: '/', label: 'Status abrufen', end: true },
-  { to: '/auftrag', label: 'Termin anfragen' },
-]
-
-const workshopLinks = [
-  { to: '/werkstatt/auftraege', label: 'Aufträge' },
-  { to: '/werkstatt/dashboard', label: 'Dashboard' },
-]
-
-function navClass({ isActive }: { isActive: boolean }): string {
+function navClass(isActive: boolean): string {
   return isActive ? 'topnav__link topnav__link--active' : 'topnav__link'
 }
 
@@ -30,9 +20,6 @@ export default function Layout() {
         <div className="container topnav__inner">
           <Link to="/" className="wordmark" onClick={closeMenu}>
             <span className="wordmark__name">Kfz-Werkstatt</span>
-            <span className="wordmark__area">
-              {workshopActive ? 'Werkstattbereich' : 'Kundenbereich'}
-            </span>
           </Link>
 
           <button
@@ -51,40 +38,21 @@ export default function Layout() {
             className={menuOpen ? 'topnav__panel topnav__panel--open' : 'topnav__panel'}
           >
             <nav className="topnav__nav" aria-label="Hauptnavigation">
-              <NavLink to="/" end className={navClass} onClick={closeMenu}>
-                Kundenbereich
+              <NavLink
+                to="/"
+                end
+                className={navClass(!workshopActive)}
+                onClick={closeMenu}
+              >
+                <span className="topnav__label">Kundenbereich</span>
               </NavLink>
               <NavLink
                 to={isAuthenticated ? '/werkstatt/auftraege' : '/werkstatt/login'}
-                className={navClass}
+                className={navClass(workshopActive)}
                 onClick={closeMenu}
               >
-                Werkstattbereich
+                <span className="topnav__label">Werkstattbereich</span>
               </NavLink>
-            </nav>
-
-            <nav className="topnav__subnav" aria-label="Bereichsnavigation">
-              {customerLinks.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  end={link.end}
-                  className={navClass}
-                  onClick={closeMenu}
-                >
-                  {link.label}
-                </NavLink>
-              ))}
-              {workshopLinks.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={navClass}
-                  onClick={closeMenu}
-                >
-                  {link.label}
-                </NavLink>
-              ))}
             </nav>
 
             <div className="topnav__account">
@@ -96,11 +64,7 @@ export default function Layout() {
                   </button>
                 </>
               ) : (
-                <NavLink
-                  to="/werkstatt/login"
-                  className="btn btn--secondary btn--sm"
-                  onClick={closeMenu}
-                >
+                <NavLink to="/werkstatt/login" className="topnav__login" onClick={closeMenu}>
                   Werkstatt-Anmeldung
                 </NavLink>
               )}
