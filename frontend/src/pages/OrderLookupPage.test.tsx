@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import OrderLookupPage from './OrderLookupPage'
 import { ApiError, apiFetch } from '../api/client'
@@ -96,7 +96,7 @@ describe('OrderLookupPage', () => {
     expect(screen.getByText('04.06.2026, 13:00 Uhr')).toBeTruthy()
   })
 
-  it('shows a German hint when no invoice exists yet', async () => {
+  it('shows a German hint above the fields when no invoice exists yet', async () => {
     mockedApiFetch.mockImplementation((path) => {
       if (String(path).includes('/invoice')) {
         return Promise.reject(new ApiError(404, 'not_found', 'Keine Rechnung vorhanden'))
@@ -107,7 +107,40 @@ describe('OrderLookupPage', () => {
     renderPage()
     fillAndSubmit()
 
-    expect(await screen.findByText(/noch keine Rechnung vor/)).toBeTruthy()
+    const hint = await screen.findByText(/Rechnung noch nicht vorhanden/)
+    const alert = hint.closest('[role="status"]')
+    expect(alert).toBeTruthy()
+    expect(alert?.className).toContain('alert--info')
+    const infoPosition = alert!.compareDocumentPosition(screen.getByLabelText('Auftragsnummer'))
+    expect(infoPosition & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('shows the lookup error above the fields as a danger alert', async () => {
+    mockedApiFetch.mockRejectedValue(new ApiError(404, 'not_found', 'Auftrag nicht gefunden'))
+
+    renderPage()
+    fillAndSubmit()
+
+    const message = await screen.findByText(/wurde kein Auftrag gefunden/)
+    const alert = message.closest('[role="alert"]')
+    expect(alert).toBeTruthy()
+    expect(alert?.className).toContain('alert--danger')
+    const position = alert!.compareDocumentPosition(screen.getByLabelText('Auftragsnummer'))
+    expect(position & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
+  it('renders the customer tabs with the current one active', () => {
+    renderPage()
+
+    const nav = screen.getByRole('navigation', { name: 'Kundenbereich' })
+    const links = within(nav).getAllByRole('link')
+    expect(links.map((link) => link.textContent)).toEqual(['Status abrufen', 'Termin anfragen'])
+
+    const currentTab = within(nav).getByRole('link', { name: 'Status abrufen' })
+    expect(currentTab.className).toContain('tabs__link--active')
+
+    const otherTab = within(nav).getByRole('link', { name: 'Termin anfragen' })
+    expect(otherTab.className).not.toContain('tabs__link--active')
   })
 
   it('shows an understandable German message for an unknown combination', async () => {

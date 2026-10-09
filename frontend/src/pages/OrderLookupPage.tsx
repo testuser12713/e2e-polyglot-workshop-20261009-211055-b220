@@ -1,8 +1,9 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import { ORDER_STATUSES } from '../api/types'
 import type { HistoryEntry, Invoice, OrderStatus, PublicOrderStatus } from '../api/types'
+import Tabs from '../components/Tabs'
 
 const NON_BREAKING_SPACE = '\u00A0'
 
@@ -93,6 +94,50 @@ function buildPlateQuery(plate: string): string {
   return params.toString()
 }
 
+type AlertTone = 'danger' | 'info'
+
+function DangerIcon() {
+  return (
+    <svg
+      className="lookup__alert-icon"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 5.75v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="10" cy="13.75" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+function InfoIcon() {
+  return (
+    <svg
+      className="lookup__alert-icon"
+      viewBox="0 0 20 20"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <circle cx="10" cy="10" r="8.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M10 9v5.25" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <circle cx="10" cy="6.25" r="1" fill="currentColor" />
+    </svg>
+  )
+}
+
+function LookupAlert({ tone, children }: { tone: AlertTone; children: ReactNode }) {
+  return (
+    <div
+      className={`alert alert--${tone} lookup__alert lookup__alert--${tone}`}
+      role={tone === 'danger' ? 'alert' : 'status'}
+    >
+      {tone === 'danger' ? <DangerIcon /> : <InfoIcon />}
+      <span>{children}</span>
+    </div>
+  )
+}
+
 interface LookupResult {
   status: PublicOrderStatus
   invoice: Invoice | null
@@ -100,6 +145,12 @@ interface LookupResult {
 }
 
 const LOOKUP_STYLES = `
+.lookup__head { display: flex; flex-direction: column; text-align: left; }
+.lookup__head .page-subtitle { margin-bottom: 0; }
+.lookup__alert { align-items: flex-start; }
+.lookup__alert-icon { flex: 0 0 auto; width: 20px; height: 20px; }
+.lookup__alert--danger .lookup__alert-icon { color: var(--color-danger); }
+.lookup__alert--info .lookup__alert-icon { color: var(--color-accent); }
 .lookup__form { width: 100%; max-width: var(--container-narrow); margin-inline: auto; }
 .lookup__results { display: flex; flex-direction: column; gap: var(--space-3); width: 100%; max-width: var(--container-content); margin-inline: auto; }
 .lookup__meta { display: grid; gap: var(--space-2); margin: 0; }
@@ -147,6 +198,20 @@ export default function OrderLookupPage() {
   const orderNumberError = (touched.orderNumber || submitAttempted) && !orderNumberValid
   const plateError = (touched.plate || submitAttempted) && !plateValid
 
+  let lookupAlert: { tone: AlertTone; text: string } | null = null
+  if (!loading) {
+    if (notFound) {
+      lookupAlert = {
+        tone: 'danger',
+        text: 'Zu dieser Kombination aus Auftragsnummer und Kennzeichen wurde kein Auftrag gefunden. Bitte prüfen Sie Ihre Eingaben und versuchen Sie es erneut.',
+      }
+    } else if (error) {
+      lookupAlert = { tone: 'danger', text: error }
+    } else if (result && result.invoice === null && result.invoiceError === null) {
+      lookupAlert = { tone: 'info', text: 'Rechnung noch nicht vorhanden.' }
+    }
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setSubmitAttempted(true)
@@ -193,7 +258,7 @@ export default function OrderLookupPage() {
     <section className="page-section">
       <style>{LOOKUP_STYLES}</style>
 
-      <div>
+      <div className="lookup__head">
         <h1 className="page-title">Status abrufen</h1>
         <p className="page-subtitle">
           Geben Sie Ihre Auftragsnummer und das Kennzeichen ein, um den aktuellen Stand und die
@@ -201,8 +266,20 @@ export default function OrderLookupPage() {
         </p>
       </div>
 
+      <Tabs
+        ariaLabel="Kundenbereich"
+        items={[
+          { to: '/', label: 'Status abrufen', end: true },
+          { to: '/auftrag', label: 'Termin anfragen' },
+        ]}
+      />
+
       <div className="lookup__form">
         <form className="card" onSubmit={handleSubmit} noValidate>
+          {lookupAlert ? (
+            <LookupAlert tone={lookupAlert.tone}>{lookupAlert.text}</LookupAlert>
+          ) : null}
+
           <div className="field">
             <label className="field__label" htmlFor="lookup-order-number">
               Auftragsnummer
@@ -263,27 +340,6 @@ export default function OrderLookupPage() {
             <p className="muted" role="status">
               Auftrag wird geladen …
             </p>
-          </div>
-        </div>
-      ) : null}
-
-      {!loading && notFound ? (
-        <div className="lookup__results">
-          <div className="card">
-            <div className="alert alert--warning" role="alert">
-              <span>
-                Zu dieser Kombination aus Auftragsnummer und Kennzeichen wurde kein Auftrag
-                gefunden. Bitte prüfen Sie Ihre Eingaben und versuchen Sie es erneut.
-              </span>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {!loading && !notFound && error ? (
-        <div className="lookup__results">
-          <div className="alert alert--danger" role="alert">
-            <span>{error}</span>
           </div>
         </div>
       ) : null}
@@ -406,21 +462,7 @@ function LookupResultView({ result }: { result: LookupResult }) {
         </div>
       ) : null}
 
-      {invoice ? (
-        <InvoiceCard invoice={invoice} />
-      ) : (
-        <div className="card">
-          <div className="card__header">
-            <h2 className="card__title">Rechnung</h2>
-          </div>
-          <div className="alert alert--info" role="status">
-            <span>
-              Für diesen Auftrag liegt noch keine Rechnung vor. Sie entsteht, sobald der Auftrag
-              fertiggestellt ist.
-            </span>
-          </div>
-        </div>
-      )}
+      {invoice ? <InvoiceCard invoice={invoice} /> : null}
     </div>
   )
 }
