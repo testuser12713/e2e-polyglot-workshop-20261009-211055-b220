@@ -4,6 +4,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ApiError, apiFetch } from '../api/client'
 import { ORDER_STATUSES } from '../api/types'
 import type { OrderStatus, WorkshopOrderSummary } from '../api/types'
+import Tabs from '../components/Tabs'
+import type { TabItem } from '../components/Tabs'
+
+const WORKSHOP_TABS: TabItem[] = [
+  { to: '/werkstatt/auftraege', label: 'Aufträge' },
+  { to: '/werkstatt/dashboard', label: 'Dashboard' },
+]
 
 const STATUS_BADGE_CLASS: Record<OrderStatus, string> = {
   angefragt: 'status-badge--angefragt',
@@ -163,6 +170,8 @@ export default function WorkshopOrdersPage() {
       <p className="page-subtitle">
         Alle Werkstattaufträge im Überblick. Nach Status filtern oder das Kennzeichen suchen.
       </p>
+
+      <Tabs items={WORKSHOP_TABS} />
 
       <form className="card orders-filters" onSubmit={handleSearch} role="search">
         <div className="orders-filters__field">

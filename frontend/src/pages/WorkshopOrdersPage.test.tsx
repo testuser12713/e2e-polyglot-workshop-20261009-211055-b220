@@ -43,6 +43,7 @@ function renderPage() {
           path="/werkstatt/auftraege/:number"
           element={<p>Detailseite Auftrag</p>}
         />
+        <Route path="/werkstatt/dashboard" element={<p>Dashboardseite</p>} />
       </Routes>
     </MemoryRouter>,
   )
@@ -103,6 +104,26 @@ describe('WorkshopOrdersPage', () => {
     fireEvent.click(screen.getByText('Anna Muster'))
 
     expect(await screen.findByText('Detailseite Auftrag')).toBeTruthy()
+  })
+
+  it('renders both workshop tabs with the current page marked active', async () => {
+    renderPage()
+    await screen.findByText('AU-2026-0042')
+
+    const ordersTab = screen.getByRole('link', { name: 'Aufträge' })
+    const dashboardTab = screen.getByRole('link', { name: 'Dashboard' })
+
+    expect(ordersTab.getAttribute('aria-current')).toBe('page')
+    expect(dashboardTab.getAttribute('aria-current')).toBeNull()
+  })
+
+  it('navigates to the sibling dashboard route when the Dashboard tab is clicked', async () => {
+    renderPage()
+    await screen.findByText('AU-2026-0042')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Dashboard' }))
+
+    expect(await screen.findByText('Dashboardseite')).toBeTruthy()
   })
 
   it('shows a German empty-state message when no order matches', async () => {

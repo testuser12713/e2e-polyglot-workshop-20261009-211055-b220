@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react'
 import { ApiError, apiFetch } from '../api/client'
 import type { Dashboard } from '../api/types'
+import Tabs from '../components/Tabs'
+import type { TabItem } from '../components/Tabs'
+
+const WORKSHOP_TABS: TabItem[] = [
+  { to: '/werkstatt/auftraege', label: 'Aufträge' },
+  { to: '/werkstatt/dashboard', label: 'Dashboard' },
+]
 
 const NON_BREAKING_SPACE = '\u00A0'
 
@@ -66,6 +73,8 @@ export default function DashboardPage() {
     <section className="page-section">
       <style>{DASHBOARD_STYLES}</style>
       <h1 className="page-title">Dashboard</h1>
+
+      <Tabs items={WORKSHOP_TABS} />
 
       {loading ? (
         <p className="muted" role="status">
