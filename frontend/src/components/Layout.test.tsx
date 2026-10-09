@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import App from '../App'
 import { apiFetch } from '../api/client'
 
@@ -107,6 +107,25 @@ describe('top navigation', () => {
     expect(labels).not.toContain('Termin anfragen')
     expect(labels).not.toContain('Aufträge')
     expect(labels).not.toContain('Dashboard')
+  })
+
+  it('shows the brand as plain text without a link role', () => {
+    navigate('/')
+    render(<App />)
+
+    const header = screen.getByRole('banner')
+    expect(within(header).queryByRole('link', { name: /Kfz-Werkstatt/ })).toBeNull()
+    expect(within(header).getByText('Kfz-Werkstatt')).toBeTruthy()
+  })
+
+  it('navigates from the customer area back to the start through the Kundenbereich entry', () => {
+    navigate('/impressum')
+    render(<App />)
+
+    const header = screen.getByRole('banner')
+    fireEvent.click(within(header).getByRole('link', { name: 'Kundenbereich' }))
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Status abrufen' })).toBeTruthy()
   })
 
   it('shows the workshop area link without a login', () => {
