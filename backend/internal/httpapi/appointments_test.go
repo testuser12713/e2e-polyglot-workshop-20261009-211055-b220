@@ -16,7 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-var orderNumberPattern = regexp.MustCompile(`^AW-\d{4}-\d{4}$`)
+var orderNumberPattern = regexp.MustCompile(`^AU-\d{4}-\d{4}$`)
 
 // appointmentDB opens a dedicated connection for assertions and makes sure the
 // startup schema exists, since these tests drive the router directly instead of
@@ -124,7 +124,7 @@ func TestCreateAppointmentNewCustomer(t *testing.T) {
 		t.Fatalf("response is not JSON: %v", err)
 	}
 	if !orderNumberPattern.MatchString(body.OrderNumber) {
-		t.Errorf("order_number %q does not match AW-YYYY-NNNN", body.OrderNumber)
+		t.Errorf("order_number %q does not match AU-YYYY-NNNN", body.OrderNumber)
 	}
 	if body.Status != "angefragt" {
 		t.Errorf("status: want angefragt, got %q", body.Status)

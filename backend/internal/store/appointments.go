@@ -46,7 +46,7 @@ type AppointmentResult struct {
 
 // CreateAppointment creates or reuses the customer (by e-mail) and the vehicle
 // (by plate), then inserts the order in status "angefragt" with its first
-// order_status_history row and a consecutive AW-YYYY-NNNN number. All of it
+// order_status_history row and a consecutive AU-YYYY-NNNN number. All of it
 // runs in ONE transaction, so a failure halfway leaves nothing behind.
 func (s *Store) CreateAppointment(ctx context.Context, in AppointmentInput) (AppointmentResult, error) {
 	tx, err := s.Pool.Begin(ctx)
@@ -137,9 +137,10 @@ func upsertVehicle(ctx context.Context, tx pgx.Tx, v AppointmentVehicle, custome
 	return id, nil
 }
 
-// nextOrderNumber atomically increments the AW counter and formats it as
-// AW-YYYY-NNNN. The UPDATE on the counter row serialises concurrent requests,
-// so two appointments never receive the same number.
+// nextOrderNumber atomically increments the order counter and formats it as
+// AU-YYYY-NNNN, the customer-facing order number. The UPDATE on the counter row
+// serialises concurrent requests, so two appointments never receive the same
+// number.
 func nextOrderNumber(ctx context.Context, tx pgx.Tx, year int) (string, error) {
 	var seq int64
 	if err := tx.QueryRow(ctx,
@@ -149,5 +150,5 @@ func nextOrderNumber(ctx context.Context, tx pgx.Tx, year int) (string, error) {
 	).Scan(&seq); err != nil {
 		return "", fmt.Errorf("increment order counter: %w", err)
 	}
-	return fmt.Sprintf("AW-%04d-%04d", year, seq), nil
+	return fmt.Sprintf("AU-%04d-%04d", year, seq), nil
 }
