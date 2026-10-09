@@ -48,6 +48,11 @@ function submit() {
   fireEvent.click(screen.getByRole('button', { name: /Anmeld/ }))
 }
 
+function hasDangerBorder(input: HTMLElement): boolean {
+  const color = (input.style.borderColor || '').toLowerCase()
+  return color.includes('179, 38, 30') || color.includes('b3261e') || color.includes('danger')
+}
+
 beforeEach(() => {
   window.localStorage.clear()
 })
@@ -155,5 +160,44 @@ describe('LoginPage', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Passwort anzeigen' }))
     expect((screen.getByLabelText('Passwort') as HTMLInputElement).type).toBe('text')
+  })
+
+  it('marks both fields invalid with the danger border after an empty submit', () => {
+    apiFetchMock.mockResolvedValue(LOGIN_RESPONSE)
+    renderLogin()
+
+    submit()
+
+    const email = screen.getByLabelText('E-Mail') as HTMLInputElement
+    const password = screen.getByLabelText('Passwort') as HTMLInputElement
+
+    expect(email.getAttribute('aria-invalid')).toBe('true')
+    expect(password.getAttribute('aria-invalid')).toBe('true')
+    expect(hasDangerBorder(email)).toBe(true)
+    expect(hasDangerBorder(password)).toBe(true)
+    expect(screen.getByText('Bitte geben Sie Ihre E-Mail-Adresse ein.')).toBeTruthy()
+    expect(screen.getByText('Bitte geben Sie Ihr Passwort ein.')).toBeTruthy()
+  })
+
+  it('clears the field errors and the danger border once a value is typed', () => {
+    apiFetchMock.mockResolvedValue(LOGIN_RESPONSE)
+    renderLogin()
+
+    submit()
+
+    fireEvent.change(screen.getByLabelText('E-Mail'), {
+      target: { value: 'anna@werkstatt.de' },
+    })
+    fireEvent.change(screen.getByLabelText('Passwort'), { target: { value: 'geheim' } })
+
+    const email = screen.getByLabelText('E-Mail') as HTMLInputElement
+    const password = screen.getByLabelText('Passwort') as HTMLInputElement
+
+    expect(email.getAttribute('aria-invalid')).not.toBe('true')
+    expect(password.getAttribute('aria-invalid')).not.toBe('true')
+    expect(hasDangerBorder(email)).toBe(false)
+    expect(hasDangerBorder(password)).toBe(false)
+    expect(screen.queryByText('Bitte geben Sie Ihre E-Mail-Adresse ein.')).toBeNull()
+    expect(screen.queryByText('Bitte geben Sie Ihr Passwort ein.')).toBeNull()
   })
 })

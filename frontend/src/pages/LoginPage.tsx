@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { FormEvent } from 'react'
+import type { CSSProperties, FormEvent } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { ApiError } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
@@ -14,6 +14,22 @@ const UNEXPECTED_ERROR_MESSAGE =
 
 interface LoginLocationState {
   from?: string
+}
+
+const INVALID_BORDER: CSSProperties = { border: '1px solid #B3261E' }
+const FOCUS_BORDER: CSSProperties = { border: '2px solid #17509B' }
+
+/**
+ * TextField error state from DESIGN.md, applied inline because this page styles
+ * itself with inline style objects: an invalid field keeps the danger border,
+ * while focus always wins with the 2px accent border (the 2px focus outline
+ * comes from the shared `.field__input:focus` rule).
+ */
+function fieldBorderStyle(invalid: boolean, focused: boolean): CSSProperties {
+  if (focused) {
+    return FOCUS_BORDER
+  }
+  return invalid ? INVALID_BORDER : {}
 }
 
 /**
@@ -32,6 +48,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [emailTouched, setEmailTouched] = useState(false)
   const [passwordTouched, setPasswordTouched] = useState(false)
+  const [emailFocused, setEmailFocused] = useState(false)
+  const [passwordFocused, setPasswordFocused] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -121,8 +139,13 @@ export default function LoginPage() {
             disabled={submitting}
             aria-invalid={showEmailError}
             aria-describedby={showEmailError ? 'login-email-error' : undefined}
+            style={fieldBorderStyle(showEmailError, emailFocused)}
             onChange={(event) => setEmail(event.target.value)}
-            onBlur={() => setEmailTouched(true)}
+            onFocus={() => setEmailFocused(true)}
+            onBlur={() => {
+              setEmailFocused(false)
+              setEmailTouched(true)
+            }}
           />
           {showEmailError ? (
             <p className="field__error" id="login-email-error" role="alert">
@@ -146,9 +169,13 @@ export default function LoginPage() {
               disabled={submitting}
               aria-invalid={showPasswordError}
               aria-describedby={showPasswordError ? 'login-password-error' : undefined}
-              style={{ flex: 1, minWidth: 0 }}
+              style={{ flex: 1, minWidth: 0, ...fieldBorderStyle(showPasswordError, passwordFocused) }}
               onChange={(event) => setPassword(event.target.value)}
-              onBlur={() => setPasswordTouched(true)}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => {
+                setPasswordFocused(false)
+                setPasswordTouched(true)
+              }}
             />
             <button
               type="button"
