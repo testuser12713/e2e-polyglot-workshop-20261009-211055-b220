@@ -6,16 +6,133 @@
       "dir": "frontend",
       "stack": "web-vite",
       "kind": "server",
-      "install": [["npm", "ci", "--no-audit", "--no-fund"]],
-      "build": [["npm", "run", "build"]],
-      "test": [["npm", "test", "--", "--run"]],
-      "start": ["npm", "run", "preview", "--", "--port", "${PORT}", "--host", "127.0.0.1", "--strictPort"],
+      "install": [
+        [
+          "npm",
+          "ci",
+          "--no-audit",
+          "--no-fund"
+        ]
+      ],
+      "build": [
+        [
+          "npm",
+          "run",
+          "build"
+        ]
+      ],
+      "test": [
+        [
+          "npm",
+          "test",
+          "--",
+          "--run"
+        ]
+      ],
+      "start": [
+        "npm",
+        "run",
+        "preview",
+        "--",
+        "--port",
+        "${PORT}",
+        "--host",
+        "127.0.0.1",
+        "--strictPort"
+      ],
       "port": 5173,
       "port_env": "PORT",
-      "health": { "path": "/", "expect_status": [200] },
+      "health": {
+        "path": "/",
+        "expect_status": [
+          200
+        ]
+      },
       "env": {
-        "VITE_API_BASE_URL": { "dev": "${service:api.origin}" }
+        "VITE_API_BASE_URL": {
+          "dev": "${service:api.origin}"
+        }
       }
+    },
+    {
+      "name": "api",
+      "dir": "backend",
+      "stack": "go",
+      "kind": "server",
+      "install": [
+        [
+          "go",
+          "mod",
+          "download"
+        ]
+      ],
+      "build": [
+        [
+          "go",
+          "build",
+          "./..."
+        ]
+      ],
+      "test": [
+        [
+          "go",
+          "test",
+          "./..."
+        ]
+      ],
+      "lint": [
+        [
+          "go",
+          "vet",
+          "./..."
+        ]
+      ],
+      "start": [
+        "go",
+        "run",
+        "./cmd/api"
+      ],
+      "port": 8000,
+      "port_env": "PORT",
+      "ready_timeout_s": 60,
+      "health": {
+        "path": "/api/health",
+        "expect_status": [
+          200
+        ]
+      },
+      "depends_on": [
+        "db",
+        "queue"
+      ],
+      "env": {
+        "DATABASE_URL": {
+          "dev": "${service:db.url}"
+        },
+        "VALKEY_URL": {
+          "dev": "${service:queue.url}"
+        },
+        "HOUR_RATE_CENTS": {
+          "dev": "6500"
+        },
+        "FRONTEND_ORIGIN": {
+          "dev": "http://localhost:5173"
+        },
+        "AUTH_SECRET": {
+          "generate": "hex",
+          "bytes": 32
+        }
+      }
+    },
+    {
+      "name": "db",
+      "kind": "database",
+      "engine": "postgres"
+    },
+    {
+      "name": "queue",
+      "kind": "database",
+      "engine": "valkey"
     }
   ]
 }

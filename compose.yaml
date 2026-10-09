@@ -1,0 +1,20 @@
+# Local development services for the workshop portal.
+#
+# Start both with:  docker compose up -d
+# They match the images the office uses: PostgreSQL 18 and Valkey 9.1.
+services:
+  db:
+    image: docker.io/library/postgres:18.6-trixie
+    environment:
+      POSTGRES_USER: workshop
+      POSTGRES_DB: workshop
+      # Local development only: no password, connections are accepted from the
+      # Docker network. Never use this for a deployed instance.
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+
+  queue:
+    image: docker.io/valkey/valkey:9.1.2-trixie
+    ports:
+      - "6379:6379"
