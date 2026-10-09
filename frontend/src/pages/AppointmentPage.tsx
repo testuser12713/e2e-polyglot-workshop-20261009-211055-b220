@@ -281,7 +281,7 @@ export default function AppointmentPage() {
       </p>
 
       {orderNumber && (
-        <div className="card" role="status">
+        <div className="card" role="status" aria-live="polite">
           <h2 className="card__title">Anfrage eingegangen</h2>
           <p>
             Vielen Dank! Ihre Terminanfrage wurde übermittelt. Bitte notieren Sie sich Ihre
