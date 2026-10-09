@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import DashboardPage from './DashboardPage'
 import { ApiError, apiFetch } from '../api/client'
 import type { Dashboard } from '../api/types'
@@ -8,6 +9,17 @@ vi.mock('../api/client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../api/client')>()
   return { ...actual, apiFetch: vi.fn() }
 })
+
+function renderPage() {
+  return render(
+    <MemoryRouter initialEntries={['/werkstatt/dashboard']}>
+      <Routes>
+        <Route path="/werkstatt/dashboard" element={<DashboardPage />} />
+        <Route path="/werkstatt/auftraege" element={<p>Auftragsseite</p>} />
+      </Routes>
+    </MemoryRouter>,
+  )
+}
 
 const mockedApiFetch = vi.mocked(apiFetch)
 
@@ -29,7 +41,7 @@ describe('DashboardPage', () => {
   it('loads the dashboard from the workshop endpoint and renders the three figures', async () => {
     mockedApiFetch.mockResolvedValue(DASHBOARD)
 
-    render(<DashboardPage />)
+    renderPage()
 
     expect(await screen.findByText('7')).toBeTruthy()
     expect(screen.getByText('3')).toBeTruthy()
@@ -45,7 +57,7 @@ describe('DashboardPage', () => {
   it('formats the monthly revenue as euro from whole cents', async () => {
     mockedApiFetch.mockResolvedValue({ ...DASHBOARD, revenue_month_cents: 5 })
 
-    render(<DashboardPage />)
+    renderPage()
 
     expect(await screen.findByText(/0,05/)).toBeTruthy()
   })
@@ -55,10 +67,34 @@ describe('DashboardPage', () => {
       new ApiError(500, 'server_error', 'Serverfehler beim Laden des Dashboards.'),
     )
 
-    render(<DashboardPage />)
+    renderPage()
 
     const alert = await screen.findByRole('alert')
     expect(alert.textContent).toContain('Serverfehler beim Laden des Dashboards.')
     expect(screen.queryByText('Offene Aufträge')).toBeNull()
+  })
+
+  it('renders both workshop tabs with the current page marked active', async () => {
+    mockedApiFetch.mockResolvedValue(DASHBOARD)
+    renderPage()
+
+    await screen.findByText('7')
+
+    const ordersTab = screen.getByRole('link', { name: 'Aufträge' })
+    const dashboardTab = screen.getByRole('link', { name: 'Dashboard' })
+
+    expect(dashboardTab.getAttribute('aria-current')).toBe('page')
+    expect(ordersTab.getAttribute('aria-current')).toBeNull()
+  })
+
+  it('navigates to the sibling orders route when the Aufträge tab is clicked', async () => {
+    mockedApiFetch.mockResolvedValue(DASHBOARD)
+    renderPage()
+
+    await screen.findByText('7')
+
+    fireEvent.click(screen.getByRole('link', { name: 'Aufträge' }))
+
+    expect(await screen.findByText('Auftragsseite')).toBeTruthy()
   })
 })
